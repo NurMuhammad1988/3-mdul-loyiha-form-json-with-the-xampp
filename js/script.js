@@ -96,8 +96,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     //modal
     const modalTrigger = document.querySelectorAll("[data-modal]"),
-        modal = document.querySelector(".modal"),
-        modalCloseBtn = document.querySelector("[data-close]");
+        modal = document.querySelector(".modal");
 
     function closeModal() {
         modal.classList.add("hide");
@@ -116,10 +115,8 @@ window.addEventListener("DOMContentLoaded", () => {
         item.addEventListener("click", openModal);
     });
 
-    modalCloseBtn.addEventListener("click", closeModal);
-
     modal.addEventListener("click", (e) => {
-        if (e.target == modal) {
+        if (e.target == modal || e.target.getAttribute("data-close") == "") {
             closeModal();
         }
     });
@@ -226,9 +223,9 @@ window.addEventListener("DOMContentLoaded", () => {
     forms.forEach((form) => {
         postData(form);
     });
- 
+
     const msg = {
-        loading: "Loading...",
+        loading: "img/spinner.svg", //loader file svg chiqadi net sekinligida
         success: " Thank's for submiting our form",
         failure: "Something went wrong",
     };
@@ -237,41 +234,69 @@ window.addEventListener("DOMContentLoaded", () => {
         form.addEventListener("submit", (e) => {
             e.preventDefault();
 
-            const statusMessage = document.createElement("div");
-            statusMessage.textContent = msg.loading;
+            const statusMessage = document.createElement("img");
+            statusMessage.src = msg.loading;
+            // statusMessage.textContent = msg.loading;
+            statusMessage.style.cssText = `
+            display:block;
+            margin: 0 auto;
+            `;
             form.append(statusMessage);
+            // form.insertAdjacentElement("afterend", statusMessage);//shu joyda nimadur muammo bor???
 
-            const request = new XMLHttpRequest();  
+            const request = new XMLHttpRequest();
 
             request.open("POST", "server.php");
 
             request.setRequestHeader("Content-Type", "application/json");
-            const obj={}
+            const obj = {};
             const formData = new FormData(form);
 
-            formData.forEach((val,key)=>{
-                obj[key] = val
-            })
+            formData.forEach((val, key) => {
+                obj[key] = val;
+            });
 
-            const json = JSON.stringify(obj)
+            const json = JSON.stringify(obj);
 
             request.send(json);
 
             request.addEventListener("load", () => {
                 if (request.status === 200) {
                     console.log(request.response);
-                    statusMessage.textContent = msg.success; 
-                     form.reset()
-                     setTimeout(() => {
-                        statusMessage.remove()
-                     }, 4000);
-                }else{
-                    statusMessage.textContent = msg.failure;
-
+                    showThanksModal(msg.success);
+                    form.reset();
+                    setTimeout(() => {
+                        statusMessage.remove();
+                    }, 4000);
+                } else {
+                    showThanksModal(msg.failure);
                 }
             });
         });
     }
 
+    function showThanksModal(message) {
+        const prewModalDialog = document.querySelector(".modal__dialog");
+        prewModalDialog.classList.add("hide");
+        openModal();
 
+        const thanksModal = document.createElement("div");
+        thanksModal.classList.add("modal__dialog");
+        thanksModal.innerHTML = `
+      <div class="modal__content">
+      <div data-close class="modal__close">&times;</div>
+      <div class="modal__title">${message}</div>
+
+      </div>
+
+
+        `;
+        document.querySelector(".modal").append(thanksModal);
+        setTimeout(() => {
+            thanksModal.remove();
+            prewModalDialog.classList.add("show");
+            prewModalDialog.classList.remove("hide");
+            closeModal();
+        }, 4000);
+    }
 });
